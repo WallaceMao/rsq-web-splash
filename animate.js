@@ -25,9 +25,9 @@
         this.htmlElement = null;
         var p = prop || {};
         this.size = new Vector(p.size[0], p.size[1]);
-        this.orgPos = this.pos = new Vector(p.pos[0], p.pos[1]);
         this.speed = new Vector(p.speed[0], p.speed[1]);
         this.dateCreated = new Date().getTime();
+        this.orgPos = this.pos = new Vector(p.pos[0], p.pos[1]);
         this.showTime = (screen.bottom - this.orgPos.y)/this.speed.y;
     }
     Cloud.prototype.actorType = 'cloud';
@@ -70,15 +70,67 @@
     }
     Logo.prototype.actorType = 'logo';
     Logo.prototype.step = function(stamp){
-        this.pos = this.pos.add(this.speed.times(stamp));
-
         if(this.pos.x > this.maxLimit.x || this.pos.x < this.minLimit.x){
             this.speed = this.speed.times(-1);
         }
+        this.pos = this.pos.add(this.speed.times(stamp));
     };
     Logo.prototype.isOut = function(){
         return false;
     };
+
+    //  静态太阳
+    function StaticSun(prop){
+        this.htmlElement = null;
+        var p = prop || {};
+        this.size = new Vector(p.size[0], p.size[1]);
+        this.pos = new Vector(p.pos[0], p.pos[1]);
+        this.speed = new Vector(p.speed[0], p.speed[1]);
+    }
+    StaticSun.prototype.actorType = 'sun';
+    StaticSun.prototype.step = function(stamp){
+    };
+    StaticSun.prototype.isOut = function(){
+        return false;
+    };
+
+    function Sun(prop){
+        this.htmlElement = null;
+        var p = prop || {};
+        this.size = new Vector(p.size[0], p.size[1]);
+        this.orgPos = this.pos = new Vector(p.pos[0], p.pos[1]);
+        this.speed = new Vector(p.speed[0], p.speed[1]);
+
+        this.shadowSize = [prop.shadowSize[0], prop.shadowSize[1], prop.shadowSize[2]];
+        this.shadowFactor = prop.shadowFactor;
+        this.shadowSpeedBase = prop.shadowSpeedBase;
+        this.shadowSpeed2 = this.shadowSpeedBase * this.shadowFactor;
+        this.shadowSpeed3 = this.shadowSpeedBase * this.shadowFactor * this.shadowFactor;
+
+        this.minLimit = this.orgPos;
+        this.maxLimit = new Vector(this.orgPos.x + 18, this.orgPos.y + 18);
+    }
+    Sun.prototype.actorType = 'sunInner';
+    Sun.prototype.step = function(stamp){
+
+        if(this.pos.x > this.maxLimit.x || this.pos.x < this.minLimit.x){
+            this.speed = this.speed.times(-1);
+            this.shadowSpeedBase = -this.shadowSpeedBase;
+            this.shadowSpeed2 = -this.shadowSpeed2;
+            this.shadowSpeed3 = -this.shadowSpeed3;
+        }
+
+        this.pos = this.pos.add(this.speed.times(stamp));
+
+        this.shadowSize[0] = this.shadowSize[0] + this.shadowSpeedBase * stamp;
+        this.shadowSize[1] = this.shadowSize[1] + this.shadowSpeed2 * stamp;
+        this.shadowSize[2] = this.shadowSize[2] + this.shadowSpeed3 * stamp;
+
+    };
+    Sun.prototype.isOut = function(){
+        return false;
+    };
+
 
     /**
      * screen
@@ -148,6 +200,13 @@
         if(htmlElement){
             htmlElement.style.left = element.pos.x + 'px';
             htmlElement.style.top = element.pos.y + 'px';
+            if(element.shadowSize){
+
+                var s1 = element.shadowSize[0],
+                    s2 = element.shadowSize[1],
+                    s3 = element.shadowSize[2];
+                htmlElement.style.boxShadow = '0 0 ' + s1 + 'px ' + s1 + 'px #e9e9eb';//, 0 0 ' + s2 + 'px ' + s2 + 'px #eaeebc, 0 0 ' + s3 + 'px ' + s3 + 'px #e9ecb0,0 0 300px 100px #e8d194';
+            }
         }else{
             htmlElement = this.makeDisplayNode(element);
             this.element.appendChild(htmlElement);
@@ -274,6 +333,21 @@
                 size: [115, 170],
                 pos: [screen.center.x, screen.center.y],
                 speed: [50, 0]
+            },
+            {
+                typeFunction: StaticSun,
+                size: [30, 30],
+                pos: [screen.left + 160, screen.top + 160],
+                speed: [0, 0]
+            },
+            {
+                typeFunction: Sun,
+                size: [1, 1],
+                pos: [screen.left + 155, screen.top + 155],
+                speed: [6, 6],
+                shadowSize: [2,3,4],
+                shadowSpeedBase: 8,
+                shadowFactor: 1.25
             }
         ],
         genElement: [
