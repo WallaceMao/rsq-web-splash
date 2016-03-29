@@ -343,7 +343,7 @@
             {
                 typeFunction: Sun,
                 size: [1, 1],
-                pos: [screen.left + 155, screen.top + 155],
+                pos: [screen.left + 175, screen.top + 175],
                 speed: [6, 6],
                 shadowSize: [2,3,4],
                 shadowSpeedBase: 8,
