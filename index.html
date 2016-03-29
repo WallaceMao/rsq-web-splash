@@ -10,6 +10,18 @@
         <!--<div class="actor sunInner"></div>-->
         <!--<div class="actor cloud"></div>-->
     </div>
+    <div class="control" style="position: absolute;z-index: 9999;">
+        <button onclick="startAnimation()">开始</button>
+        <button onclick="stopAnimation()">停止</button>
+    </div>
     <script type="text/javascript" src="animate.js"></script>
+    <script type="text/javascript">
+        function startAnimation(){
+            RsqLoading.start();
+        }
+        function stopAnimation(){
+            RsqLoading.stop();
+        }
+    </script>
 </body>
 </html>

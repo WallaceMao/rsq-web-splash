@@ -65,15 +65,18 @@
         this.size = new Vector(p.size[0], p.size[1]);
         this.pos = new Vector(p.pos[0], p.pos[1]);
         this.speed = new Vector(p.speed[0], p.speed[1]);
-        this.minLimit = new Vector(screen.center.x - 1.5*this.size.x, screen.center.y);
-        this.maxLimit = new Vector(screen.center.x + 0.5*this.size.x, screen.center.y);
+
+        this.wobble = Math.PI, 0;
+        this.middle = screen.center.x;
+        this.radius = 1.5 * this.size.x;
+
     }
     Logo.prototype.actorType = 'logo';
     Logo.prototype.step = function(stamp){
-        if(this.pos.x > this.maxLimit.x || this.pos.x < this.minLimit.x){
-            this.speed = this.speed.times(-1);
-        }
-        this.pos = this.pos.add(this.speed.times(stamp));
+
+        this.wobble += stamp * this.speed.x;
+        this.pos = new Vector(this.middle + Math.sin(this.wobble) * this.radius, this.pos.y);
+
     };
     Logo.prototype.isOut = function(){
         return false;
@@ -101,30 +104,22 @@
         this.orgPos = this.pos = new Vector(p.pos[0], p.pos[1]);
         this.speed = new Vector(p.speed[0], p.speed[1]);
 
-        this.shadowSize = [prop.shadowSize[0], prop.shadowSize[1], prop.shadowSize[2]];
-        this.shadowFactor = prop.shadowFactor;
-        this.shadowSpeedBase = prop.shadowSpeedBase;
-        this.shadowSpeed2 = this.shadowSpeedBase * this.shadowFactor;
-        this.shadowSpeed3 = this.shadowSpeedBase * this.shadowFactor * this.shadowFactor;
+        this.shadowSize = prop.shadowSize;
+        this.shadowSpeed = prop.shadowSpeed;
+        this.shadowColor = prop.shadowColor;
 
-        this.minLimit = this.orgPos;
-        this.maxLimit = new Vector(this.orgPos.x + 18, this.orgPos.y + 18);
+        this.wobble = Math.PI;
+        this.middle = 30;
+        this.radius = 10;
+
+//        this.minShadowLimit = 20;
+//        this.maxShadowLimit = 40;
     }
     Sun.prototype.actorType = 'sunInner';
     Sun.prototype.step = function(stamp){
 
-        if(this.pos.x > this.maxLimit.x || this.pos.x < this.minLimit.x){
-            this.speed = this.speed.times(-1);
-            this.shadowSpeedBase = -this.shadowSpeedBase;
-            this.shadowSpeed2 = -this.shadowSpeed2;
-            this.shadowSpeed3 = -this.shadowSpeed3;
-        }
-
-        this.pos = this.pos.add(this.speed.times(stamp));
-
-        this.shadowSize[0] = this.shadowSize[0] + this.shadowSpeedBase * stamp;
-        this.shadowSize[1] = this.shadowSize[1] + this.shadowSpeed2 * stamp;
-        this.shadowSize[2] = this.shadowSize[2] + this.shadowSpeed3 * stamp;
+        this.wobble += stamp * this.shadowSpeed;
+        this.shadowSize = Math.sin(this.wobble) * this.radius + this.middle;
 
     };
     Sun.prototype.isOut = function(){
@@ -151,6 +146,7 @@
         this.center = new Vector(this.left + this.right/2, this.top + this.bottom/2);
 
         this.lastTimeStamp = null;
+        this.active = true;
     }
     Screen.prototype.init = function(elementArray){
         this.elementArray = elementArray;
@@ -180,9 +176,12 @@
         this.lastTimeStamp = mills;
 
         var self = this;
-        this.window.requestAnimationFrame(function(mills){
-            self.step(mills);
-        });
+
+        if(this.active){
+            this.window.requestAnimationFrame(function(mills){
+                self.step(mills);
+            });
+        }
     };
     Screen.prototype.redraw = function(stamp){
         this.elementArray.forEach(function(ele){
@@ -202,10 +201,8 @@
             htmlElement.style.top = element.pos.y + 'px';
             if(element.shadowSize){
 
-                var s1 = element.shadowSize[0],
-                    s2 = element.shadowSize[1],
-                    s3 = element.shadowSize[2];
-                htmlElement.style.boxShadow = '0 0 ' + s1 + 'px ' + s1 + 'px #e9e9eb';//, 0 0 ' + s2 + 'px ' + s2 + 'px #eaeebc, 0 0 ' + s3 + 'px ' + s3 + 'px #e9ecb0,0 0 300px 100px #e8d194';
+                var s1 = element.shadowSize;
+                htmlElement.style.boxShadow = '0 0 ' + s1 + 'px ' + s1 + 'px ' + element.shadowColor;//, 0 0 ' + s2 + 'px ' + s2 + 'px #eaeebc, 0 0 ' + s3 + 'px ' + s3 + 'px #e9ecb0,0 0 300px 100px #e8d194';
             }
         }else{
             htmlElement = this.makeDisplayNode(element);
@@ -225,10 +222,19 @@
         this.elementArray.splice(index, 1);
     };
     Screen.prototype.start = function(){
+        this.active = true;
         var self = this;
         this.window.requestAnimationFrame(function(mills){
             self.step(mills);
         });
+    };
+    Screen.prototype.stop = function(){
+        this.active = false;
+    };
+    Screen.prototype.destroy = function(){
+        while(this.element.firstChild){
+            this.element.removeChild(this.element.firstChild);
+        }
     };
 
 
@@ -295,10 +301,14 @@
 
     }
 
+    function stop(){
+        screen.stop();
+        screen.destroy();
+    }
+
     var screen = new Screen(win, {
         element: document.getElementById("loadingPanel")
     });
-
 
     // generator描述
     // initPlan
@@ -332,7 +342,7 @@
                 typeFunction: Logo,
                 size: [115, 170],
                 pos: [screen.center.x, screen.center.y],
-                speed: [50, 0]
+                speed: [0.5, 0]
             },
             {
                 typeFunction: StaticSun,
@@ -342,12 +352,12 @@
             },
             {
                 typeFunction: Sun,
-                size: [1, 1],
-                pos: [screen.left + 175, screen.top + 175],
-                speed: [6, 6],
-                shadowSize: [2,3,4],
-                shadowSpeedBase: 8,
-                shadowFactor: 1.25
+                size: [2, 2],
+                pos: [screen.left + 174, screen.top + 174],
+                speed: [0, 0],
+                shadowSize: 20,
+                shadowSpeed: 6,
+                shadowColor: '#e9e9eb'
             }
         ],
         genElement: [
@@ -382,7 +392,12 @@
         ]
     };
 
-    //  kick off
-    start(plan);
-
+    win.RsqLoading = {
+        start: function(){
+            start(plan);
+        },
+        stop: function(){
+            stop();
+        }
+    }
 })(window, document);

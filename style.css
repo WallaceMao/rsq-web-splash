@@ -31,14 +31,4 @@
 }
 .sunInner {
     background: #e9e9eb;border-radius: 50%;z-index: 1199;
-    box-shadow: 0 0 2px 2px #e8d194, 0 0 3px 3px #e8d194, 0 0 4px 4px #e8d194;
-    /*margin: -1px 0 0 -1px;*/
-    /*-webkit-animation: sunshine 10s ease-in-out infinite;*/
-    /*box-shadow: 0 0 40px 40px #e9e9eb, 0 0 50px 50px #eaeebc, 0 0 58px 58px #e9ecb0;*/
-    /*box-shadow: 0 0 0px 0px #e9e9eb, 0 0 0px 0px #eaeebc, 0 0 0px 0px #e9ecb0;*/
-}
-@-webkit-keyframes sunshine {
-    0%  {margin-top: -20px; margin-left: -20px;box-shadow: 0 0 2px 2px #e8d194, 0 0 3px 3px #e8d194, 0 0 4px 4px #e8d194;}
-    50% {margin-top: -1px; margin-left: -1px;box-shadow: 0 0 40px 40px #e9e9eb, 0 0 50px 50px #eaeebc, 0 0 58px 58px #e9ecb0,0 0 300px 100px #e8d194;}
-    100%{margin-top: -20px; margin-left: -20px;box-shadow: 0 0 2px 2px #e8d194, 0 0 3px 3px #e8d194, 0 0 4px 4px #e8d194;}
 }
